@@ -17,8 +17,11 @@ def send_message(chat_id, text):
     bot.send_message(chat_id, text)
 
 def send_file(chat_id, file_path):
-    with open(file_path, "rb") as file:
-        bot.send_document(chat_id, file)
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as file:
+            bot.send_document(chat_id, file)
+    else:
+        send_message(chat_id, "[System] File not found (404 error)")
 
 def is_allowed_user(user_id):
     return user_id in ALLOWED_USERS
