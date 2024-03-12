@@ -10,7 +10,5 @@ services:
       restart: no
 
       environment:
-        # Example bot token
-        - TOKEN=7105555008:adgj09u0asdfsf33alskfas
-        # Admins chat_ID
-        - ALLOWED_USERS=6242555555
+        - TOKEN=72342323008:AAHsMFGпа24243132W8uod0xn-583NeLp2A
+        - ALLOWED_USERS=6340012312
