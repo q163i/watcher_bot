@@ -1,18 +1,18 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/q163i/terraform-associate">
+  <a href="https://github.com/q163i/watcher_bot">
     <img src="https://avatars.githubusercontent.com/u/1525981?s=200&v=4" alt="Logo" width="80" height="80">
   </a>
-  <h3 align="center">watcher-bot</h3>
+  <h3 align="center">watcher_bot</h3>
   <p align="center">
     <br />
-    <a href="https://github.com/q163i/watcher-bot"><strong>Explore the docs »</strong></a>
+    <a href="https://github.com/q163i/watcher_bot"><strong>Explore the docs »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/q163i/watcher-bot/issues">Report Bug</a>
+    <a href="https://github.com/q163i/watcher_bot/issues">Report Bug</a>
     ·
-    <a href="https://github.com/q163i/watcher-bot/issues">Request Feature</a>
+    <a href="https://github.com/q163i/watcher_bot/issues">Request Feature</a>
   </p>
 </div>
 
