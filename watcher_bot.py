@@ -10,7 +10,14 @@ from urllib.parse import urlparse
 import socket
 import logging
 
-DEFAULT_LOG_LEVEL = "DEBUG"
+restart_notification = os.getenv("RESTART_NOTIFICATION", "false")
+
+if restart_notification.lower() == "true":
+    for user_id in ALLOWED_USERS:
+        logging.info("[System] Bot restarted after update!")
+        send_message(user_id, "[System] Bot restarted after update!")
+
+DEFAULT_LOG_LEVEL = "INFO"
 LOG_LEVEL = os.getenv("LOG_LEVEL", DEFAULT_LOG_LEVEL)
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
@@ -27,14 +34,21 @@ if not TOKEN or not ALLOWED_USERS:
 bot = telebot.TeleBot(TOKEN)
 
 def send_message(chat_id, text):
+    logging.info(f"Sending message to {chat_id}: {text}")
     bot.send_message(chat_id, text)
 
-def send_file(chat_id, file_path):
-    if os.path.exists(file_path):
-        with open(file_path, "rb") as file:
-            bot.send_document(chat_id, file)
-    else:
-        send_message(chat_id, "[System] File not found (404 error)")
+@bot.message_handler(func=lambda message: not is_allowed_user(message.chat.id))
+def handle_unauthorized_message(message):
+    error_message = "[System] 403 - Forbidden. You are not in The list: ALLOWED_USERS"
+    logging.error(error_message)
+    send_message(message.chat.id, error_message)
+    forward_spam_message(message)
+
+def forward_spam_message(message):
+    for user_id in ALLOWED_USERS:
+        if user_id != message.chat.id:
+            logging.info(f"[System] Forwarding spam message to ALLOWED_USERS: {ALLOWED_USERS}")
+            send_message(user_id, f"[Spam] Message from unauthorized user (ID: {message.chat.id}): {message.text}")
 
 def is_allowed_user(user_id):
     return user_id in ALLOWED_USERS
@@ -48,6 +62,8 @@ def handle_command_line_args():
 
 def run_bot():
     try:
+        logging.info("[System] Bot started!")
+
         for user_id in ALLOWED_USERS:
             send_message(user_id, "[System] Bot started!")
 
@@ -113,12 +129,6 @@ def handle_check_certificate(message):
             send_message(message.chat.id, "[System] Incorrect command format. Use /checkCertificate <domain_name>")
     else:
         forward_spam_message(message)
-
-def forward_spam_message(message):
-    for user_id in ALLOWED_USERS:
-        if user_id != message.chat.id:
-            send_message(user_id, f"[Spam] Message from unauthorized user (ID: {message.chat.id}): {message.text}")
-
 
 def get_certificate_expiration_days(domain):
     try:
