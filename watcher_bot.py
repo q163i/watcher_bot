@@ -9,6 +9,7 @@ import ssl
 from urllib.parse import urlparse
 import socket
 import logging
+import requests
 
 restart_notification = os.getenv("RESTART_NOTIFICATION", "false")
 
@@ -22,7 +23,13 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", DEFAULT_LOG_LEVEL)
 
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 
-logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+LOG_FILE = os.getenv("LOG_FILE")  # Get log file path from environment variable
+
+# Configure logging to write to both stdout and a file
+handlers = [logging.StreamHandler()]  # Always write logs to stdout
+if LOG_FILE:
+    handlers.append(logging.FileHandler(LOG_FILE))  # Add file handler if LOG_FILE is provided
+logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT, handlers=handlers)
 
 TOKEN = os.getenv("TOKEN")
 ALLOWED_USERS = [int(user_id) for user_id in os.getenv("ALLOWED_USERS", "").split(",") if user_id]
@@ -33,13 +40,19 @@ if not TOKEN or not ALLOWED_USERS:
 
 bot = telebot.TeleBot(TOKEN)
 
+# Определение функции send_file
+def send_file(chat_id, file_path):
+    logging.info(f"Sending file {file_path} to {chat_id}")
+    with open(file_path, 'rb') as file:
+        bot.send_document(chat_id, file)
+
 def send_message(chat_id, text):
     logging.info(f"Sending message to {chat_id}: {text}")
     bot.send_message(chat_id, text)
 
 @bot.message_handler(func=lambda message: not is_allowed_user(message.chat.id))
 def handle_unauthorized_message(message):
-    error_message = "[System] 403 - Forbidden. You are not in The list: ALLOWED_USERS"
+    error_message = "[System] 403 - Forbidden. You are not in the list of ALLOWED_USERS."
     logging.error(error_message)
     send_message(message.chat.id, error_message)
     forward_spam_message(message)
@@ -60,12 +73,28 @@ def handle_command_line_args():
 
     return parser.parse_args()
 
+def get_external_ip():
+    try:
+        # Сервис, предоставляющий информацию о внешнем IP-адресе
+        response = requests.get('https://api.ipify.org')
+        if response.status_code == 200:
+            return response.text  # Получаем внешний IP-адрес из ответа
+        else:
+            logging.error(f"Failed to retrieve external IP address: {response.status_code}")
+            return None
+    except Exception as e:
+        logging.error(f"Error retrieving external IP address: {e}")
+        return None
+
 def run_bot():
     try:
         logging.info("[System] Bot started!")
 
-        for user_id in ALLOWED_USERS:
-            send_message(user_id, "[System] Bot started!")
+        # Получаем внешний IP-адрес при запуске бота
+        external_ip = get_external_ip()
+        if external_ip:
+            for user_id in ALLOWED_USERS:
+                send_message(user_id, f"[System] Bot started! External IP: {external_ip}")
 
         while True:
             try:
@@ -79,8 +108,8 @@ def run_bot():
 
 def send_help_message(chat_id):
     help_text = "/help - Show available commands\n"
-    help_text += "/checkNetwork <server> <port> - Check network availability to the specified server and port (8.8.8.8 443)\n"
-    help_text += "/checkCertificate <domain_name> - Check SSL certificate expiration date for the specified domain (https://google.com)\n"
+    help_text += "/checkNetwork <server> <port> - Check network availability to the specified server and port (e.g., /checkNetwork 8.8.8.8 443)\n"
+    help_text += "/checkCertificate <domain_name> - Check SSL certificate expiration date for the specified domain (e.g., /checkCertificate https://google.com)\n"
     help_text += "\n"
     help_text += "Command executed from the server: python3 watcher_bot.py getData --data /path/to/file.exe - send a file from the server to Telegram\n"
     send_message(chat_id, help_text)
@@ -129,6 +158,11 @@ def handle_check_certificate(message):
             send_message(message.chat.id, "[System] Incorrect command format. Use /checkCertificate <domain_name>")
     else:
         forward_spam_message(message)
+
+@bot.message_handler(commands=['start'])
+def handle_start(message):
+    if is_allowed_user(message.chat.id):
+        handle_help(message)
 
 def get_certificate_expiration_days(domain):
     try:

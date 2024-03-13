@@ -10,5 +10,5 @@ services:
       restart: no
 
       environment:
-        - TOKEN=345345345:AAHsMFGPIOWZfdklfgjljsd-sdfsdg
-        - ALLOWED_USERS=6153020341HELLO!
+        - TOKEN=CHANGE_TOKEN
+        - ALLOWED_USERS=CHANGE_ALLOWED_USERS

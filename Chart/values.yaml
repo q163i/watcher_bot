@@ -9,9 +9,10 @@ image:
   pullPolicy: Always
 
 env:
-  LOG_LEVEL: "DEBUG"
+  LOG_LEVEL: "INFO"
+  LOG_FILE: "/tmp/bot.log"
   RESTART_NOTIFICATION: "true"
 
 secrets:
-  TOKEN: 345345345:AAHsMFGPIOWZfdklfgjljsd-sdfsdg
-  ALLOWED_USERS: 6153020341HELLO!
+  TOKEN: "CHANGE_TOKEN"
+  ALLOWED_USERS: "CHANGE_ALLOWED_USERS"
