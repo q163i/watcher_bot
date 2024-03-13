@@ -22,8 +22,12 @@ restart_notification = os.getenv("RESTART_NOTIFICATION", "false")
 
 bot = telebot.TeleBot(TOKEN)
 
+if not TOKEN or not ALLOWED_USERS:
+    logging.error("Error: TOKEN and ALLOWED_USERS cannot be empty.")
+    sys.exit(1)
+
 def send_message(chat_id, text):
-    logging.info(f"Sending message to {chat_id}: {text}")
+    logging.info(f"[System] Sending message to {chat_id}: {text}")
     bot.send_message(chat_id, text)
 
 # Configure logging to write to both stdout and a file
@@ -32,17 +36,13 @@ if LOG_FILE:
     handlers.append(logging.FileHandler(LOG_FILE))  # Add file handler if LOG_FILE is provided
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT, handlers=handlers)
 
-if not TOKEN or not ALLOWED_USERS:
-    logging.error("Error: TOKEN and ALLOWED_USERS cannot be empty.")
-    sys.exit(1)
-
 if restart_notification.lower() == "true":
     for user_id in ALLOWED_USERS:
         logging.info("[System] Bot restarted after update!")
         send_message(user_id, "[System] Bot restarted after update!")
 
 def send_file(chat_id, file_path):
-    logging.info(f"Sending file {file_path} to {chat_id}")
+    logging.info(f"[System] Sending file {file_path} to {chat_id}")
     with open(file_path, 'rb') as file:
         bot.send_document(chat_id, file)
 
@@ -65,7 +65,7 @@ def is_allowed_user(user_id):
 def handle_command_line_args():
     parser = argparse.ArgumentParser(description='Telegram bot with command line arguments.')
     parser.add_argument('command', nargs='?', default='run', help='Command to execute (default: run)')
-    parser.add_argument('--data', help='Path to file')
+    parser.add_argument('--data', help='Path to file or message text')
 
     return parser.parse_args()
 
@@ -94,24 +94,26 @@ def run_bot():
             try:
                 bot.polling(none_stop=True)
             except Exception as e:
-                logging.error(f"Bot encountered an error: {e}")
+                logging.error(f"[System] Bot encountered an error: {e}")
                 time.sleep(10)
     except Exception as e:
         logging.error(f"Error: {e}")
         time.sleep(10)
 
-def send_help_message(chat_id):
-    help_text = "/help - Show available commands\n"
-    help_text += "/checkNetwork <server> <port> - Check network availability to the specified server and port (e.g., /checkNetwork 8.8.8.8 443)\n"
-    help_text += "/checkCertificate <domain_name> - Check SSL certificate expiration date for the specified domain (e.g., /checkCertificate https://google.com)\n"
-    help_text += "\n"
-    help_text += "Command executed from the server: python3 watcher_bot.py getData --data /path/to/file.exe - send a file from the server to Telegram\n"
-    send_message(chat_id, help_text)
-
-@bot.message_handler(commands=['help'])
 def handle_help(message):
     if is_allowed_user(message.chat.id):
-        send_help_message(message.chat.id)
+        help_text = "/help - Show available commands\n"
+        help_text += "/checkNetwork <server> <port> - Check network availability to the specified server and port (e.g., /checkNetwork 8.8.8.8 443)\n"
+        help_text += "/checkCertificate <domain_name> - Check SSL certificate expiration date for the specified domain (e.g., /checkCertificate https://google.com)\n"
+        help_text += "/sendMessage <message> - Send a message to the allowed users\n"
+        help_text += "\n"
+        help_text += "Command executed from the server: python3 watcher_bot.py getData --data /path/to/file.exe - send a file from the server to Telegram\n"
+        send_message(message.chat.id, help_text)
+
+@bot.message_handler(commands=['help'])
+def handle_help_command(message):
+    if is_allowed_user(message.chat.id):
+        handle_help(message)
 
 @bot.message_handler(commands=['checkNetwork'])
 def handle_check_network(message):
@@ -181,7 +183,10 @@ if __name__ == '__main__':
         for user_id in ALLOWED_USERS:
             send_message(user_id, "[System] python3 watcher_bot.py getData --data * completed! ")
             send_file(user_id, args.data)
+    elif args.command == 'sendMessage' and args.data:
+        for user_id in ALLOWED_USERS:
+            send_message(user_id, args.data)
     elif args.command == 'run':
         run_bot()
     else:
-        logging.error("Invalid command. Usage: python3 watcher_bot.py [getData --data /pathto/file.env | run]")
+        logging.error("Invalid command. Usage: python3 watcher_bot.py [getData --data /pathto/file.env | sendMessage --data 'message' | run]")
