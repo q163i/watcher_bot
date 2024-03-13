@@ -18,7 +18,6 @@ DEFAULT_LOG_LEVEL = "INFO"
 LOG_LEVEL = os.getenv("LOG_LEVEL", DEFAULT_LOG_LEVEL)
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 LOG_FILE = os.getenv("LOG_FILE")  # Get log file path from environment variable
-restart_notification = os.getenv("RESTART_NOTIFICATION", "false")
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -35,11 +34,6 @@ handlers = [logging.StreamHandler()]  # Always write logs to stdout
 if LOG_FILE:
     handlers.append(logging.FileHandler(LOG_FILE))  # Add file handler if LOG_FILE is provided
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT, handlers=handlers)
-
-if restart_notification.lower() == "true":
-    for user_id in ALLOWED_USERS:
-        logging.info("[System] Bot restarted after update!")
-        send_message(user_id, "[System] Bot restarted after update!")
 
 def send_file(chat_id, file_path):
     logging.info(f"[System] Sending file {file_path} to {chat_id}")
