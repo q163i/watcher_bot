@@ -10,6 +10,7 @@ from urllib.parse import urlparse
 import socket
 import logging
 import requests
+import time
 
 TOKEN = os.getenv("TOKEN")
 ALLOWED_USERS = [int(user_id) for user_id in os.getenv("ALLOWED_USERS", "").split(",") if user_id]
@@ -25,27 +26,19 @@ if not TOKEN or not ALLOWED_USERS:
     logging.error("Error: TOKEN and ALLOWED_USERS cannot be empty.")
     sys.exit(1)
 
-def send_message(chat_id, text):
-    logging.info(f"[System] Sending message to {chat_id}: {text}")
-    bot.send_message(chat_id, text)
-
-# Configure logging to write to both stdout and a file
 handlers = [logging.StreamHandler()]  # Always write logs to stdout
 if LOG_FILE:
     handlers.append(logging.FileHandler(LOG_FILE))  # Add file handler if LOG_FILE is provided
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT, handlers=handlers)
 
+def send_message(chat_id, text):
+    logging.info(f"[System] Sending message to {chat_id}: {text}")
+    bot.send_message(chat_id, text)
+
 def send_file(chat_id, file_path):
     logging.info(f"[System] Sending file {file_path} to {chat_id}")
     with open(file_path, 'rb') as file:
         bot.send_document(chat_id, file)
-
-@bot.message_handler(func=lambda message: not is_allowed_user(message.chat.id))
-def handle_unauthorized_message(message):
-    error_message = "[System] 403 - Forbidden. You are not in the list of ALLOWED_USERS."
-    logging.error(error_message)
-    send_message(message.chat.id, error_message)
-    forward_spam_message(message)
 
 def forward_spam_message(message):
     for user_id in ALLOWED_USERS:
@@ -76,14 +69,24 @@ def get_external_ip():
         logging.error(f"Error retrieving external IP address: {e}")
         return None
 
+def handle_help(message):
+    if is_allowed_user(message.chat.id):
+        help_text = "Command list:\n"
+        help_text += "/checkNetwork <server> <port> - Check network availability to the specified server and port (e.g., /checkNetwork 8.8.8.8 443)\n"
+        help_text += "/checkCertificate <domain_name> - Check SSL certificate expiration date for the specified domain (e.g., /checkCertificate https://google.com)\n"
+        help_text += "/sendMessage <message> - Send a message to the allowed users\n"
+        help_text += "\n"
+        help_text += "#1.Command executed from the server:\n   python3 watcher_bot.py getData --data /path/to/file.exe - send a file from the server to Telegram\n"
+        help_text += "#2.Command executed from the server:\n   python3 watcher_bot.py sendMessage --data 'HELLO!' - send a message to Telegram\n"
+        send_message(message.chat.id, help_text)
+
 def run_bot():
     try:
-        logging.info("[System] Bot started!")
+        logging.info("[System] Daemon Started")
         external_ip = get_external_ip()
         if external_ip:
             for user_id in ALLOWED_USERS:
-                send_message(user_id, f"[System] Bot started! External IP: {external_ip}")
-
+                send_message(user_id, f"[System] Daemon Started on External IP: {external_ip}")
         while True:
             try:
                 bot.polling(none_stop=True)
@@ -93,16 +96,12 @@ def run_bot():
     except Exception as e:
         logging.error(f"Error: {e}")
         time.sleep(10)
-
-def handle_help(message):
-    if is_allowed_user(message.chat.id):
-        help_text = "/help - Show available commands\n"
-        help_text += "/checkNetwork <server> <port> - Check network availability to the specified server and port (e.g., /checkNetwork 8.8.8.8 443)\n"
-        help_text += "/checkCertificate <domain_name> - Check SSL certificate expiration date for the specified domain (e.g., /checkCertificate https://google.com)\n"
-        help_text += "/sendMessage <message> - Send a message to the allowed users\n"
-        help_text += "\n"
-        help_text += "Command executed from the server: python3 watcher_bot.py getData --data /path/to/file.exe - send a file from the server to Telegram\n"
-        send_message(message.chat.id, help_text)
+@bot.message_handler(func=lambda message: not is_allowed_user(message.chat.id))
+def handle_unauthorized_message(message):
+    error_message = "[System] 403 - Forbidden. You are not in the list of ALLOWED_USERS."
+    logging.error(error_message)
+    send_message(message.chat.id, error_message)
+    forward_spam_message(message)
 
 @bot.message_handler(commands=['help'])
 def handle_help_command(message):
@@ -148,11 +147,6 @@ def handle_check_certificate(message):
             send_message(message.chat.id, "[System] Incorrect command format. Use /checkCertificate <domain_name>")
     else:
         forward_spam_message(message)
-
-@bot.message_handler(commands=['start'])
-def handle_start(message):
-    if is_allowed_user(message.chat.id):
-        handle_help(message)
 
 def get_certificate_expiration_days(domain):
     try:

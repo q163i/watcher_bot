@@ -1,14 +1,26 @@
----
+#№ Docker Compose configuration for deploying the Python Telegram bot
+
+# Docker Compose version
 version: '3.7'
 
+# Define services
 services:
-    python_telegram:
-      build:
-        context: ./
-      container_name: watcher_bot
-      image: romanolitvinov/watcherbot:1
-      restart: no
+  # Service for the Python Telegram bot
+  python_telegram:
+    # Build configuration for the Docker image
+    build:
+      # Use the current directory as the build context
+      context: ./
+    # Name of the container
+    container_name: watcher_bot
+    # Docker image to use (If you want -> CHANGE ON YOURS)
+    image: romanolitvinov/watcher_bot:latest
+    # Do not automatically restart the container
+    restart: no
 
-      environment:
-        - TOKEN=CHANGE_TOKEN
-        - ALLOWED_USERS=CHANGE_ALLOWED_USERS
+    # Environment variables for configuring the bot
+    environment:
+      # Telegram bot token (replace with your actual token)
+      - TOKEN=CHANGE_TOKEN
+      # Comma-separated list of allowed user IDs (replace with actual user IDs)
+      - ALLOWED_USERS=CHANGE_ALLOWED_USERS

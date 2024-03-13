@@ -1,2 +1,2 @@
-pyTelegramBotAPI==3.7.7
-requests
+pyTelegramBotAPI==3.7.7  # Version 3.7.7 of the pyTelegramBotAPI library
+requests  # The requests library for making HTTP requests
