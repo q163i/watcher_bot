@@ -1,0 +1,16 @@
+---
+namespace: "python"
+createNamespace: true
+replicaCount: 1
+
+image:
+  repository: romanolitvinov/watcher_bot
+  tag: 1
+  pullPolicy: Always
+
+env:
+  LOG_LEVEL: "DEBUG"
+
+secrets:
+  ALLOWED_USERS: "6153020341HELLO!"
+  TOKEN: "345345345:AAHsMFGPIOWZfdklfgjljsd-sdfsdg"

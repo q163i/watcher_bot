@@ -6,9 +6,9 @@ services:
       build:
         context: ./
       container_name: watcher_bot
-      image: q163i/watcherbot:1
+      image: romanolitvinov/watcherbot:1
       restart: no
 
       environment:
-        - TOKEN=72342323008:AAHsMFGпа24243132W8uod0xn-583NeLp2A
-        - ALLOWED_USERS=6340012312
+        - TOKEN=345345345:AAHsMFGPIOWZfdklfgjljsd-sdfsdg
+        - ALLOWED_USERS=6153020341HELLO!

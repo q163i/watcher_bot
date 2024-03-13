@@ -10,6 +10,13 @@ from urllib.parse import urlparse
 import socket
 import logging
 
+DEFAULT_LOG_LEVEL = "DEBUG"
+LOG_LEVEL = os.getenv("LOG_LEVEL", DEFAULT_LOG_LEVEL)
+
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+
+logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+
 TOKEN = os.getenv("TOKEN")
 ALLOWED_USERS = [int(user_id) for user_id in os.getenv("ALLOWED_USERS", "").split(",") if user_id]
 
@@ -18,8 +25,6 @@ if not TOKEN or not ALLOWED_USERS:
     sys.exit(1)
 
 bot = telebot.TeleBot(TOKEN)
-
-logging.basicConfig(filename='/tmp/watcher_bot.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def send_message(chat_id, text):
     bot.send_message(chat_id, text)
@@ -50,7 +55,7 @@ def run_bot():
             try:
                 bot.polling(none_stop=True)
             except Exception as e:
-                logging.error(f"Error: {e}")
+                logging.error(f"Bot encountered an error: {e}")
                 time.sleep(10)
     except Exception as e:
         logging.error(f"Error: {e}")
@@ -114,6 +119,7 @@ def forward_spam_message(message):
         if user_id != message.chat.id:
             send_message(user_id, f"[Spam] Message from unauthorized user (ID: {message.chat.id}): {message.text}")
 
+
 def get_certificate_expiration_days(domain):
     try:
         url = urlparse(domain)
@@ -140,4 +146,4 @@ if __name__ == '__main__':
     elif args.command == 'run':
         run_bot()
     else:
-        logging.error("Invalid command. Usage: python3 watcher_bot.py [getData --data /path/to/file.env | run]")
+        logging.error("Invalid command. Usage: python3 watcher_bot.py [getData --data /pathto/file.env | run]")
