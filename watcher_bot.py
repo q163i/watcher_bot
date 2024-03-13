@@ -11,19 +11,20 @@ import socket
 import logging
 import requests
 
-restart_notification = os.getenv("RESTART_NOTIFICATION", "false")
-
-if restart_notification.lower() == "true":
-    for user_id in ALLOWED_USERS:
-        logging.info("[System] Bot restarted after update!")
-        send_message(user_id, "[System] Bot restarted after update!")
+TOKEN = os.getenv("TOKEN")
+ALLOWED_USERS = [int(user_id) for user_id in os.getenv("ALLOWED_USERS", "").split(",") if user_id]
 
 DEFAULT_LOG_LEVEL = "INFO"
 LOG_LEVEL = os.getenv("LOG_LEVEL", DEFAULT_LOG_LEVEL)
-
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
-
 LOG_FILE = os.getenv("LOG_FILE")  # Get log file path from environment variable
+restart_notification = os.getenv("RESTART_NOTIFICATION", "false")
+
+bot = telebot.TeleBot(TOKEN)
+
+def send_message(chat_id, text):
+    logging.info(f"Sending message to {chat_id}: {text}")
+    bot.send_message(chat_id, text)
 
 # Configure logging to write to both stdout and a file
 handlers = [logging.StreamHandler()]  # Always write logs to stdout
@@ -31,24 +32,19 @@ if LOG_FILE:
     handlers.append(logging.FileHandler(LOG_FILE))  # Add file handler if LOG_FILE is provided
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT, handlers=handlers)
 
-TOKEN = os.getenv("TOKEN")
-ALLOWED_USERS = [int(user_id) for user_id in os.getenv("ALLOWED_USERS", "").split(",") if user_id]
-
 if not TOKEN or not ALLOWED_USERS:
     logging.error("Error: TOKEN and ALLOWED_USERS cannot be empty.")
     sys.exit(1)
 
-bot = telebot.TeleBot(TOKEN)
+if restart_notification.lower() == "true":
+    for user_id in ALLOWED_USERS:
+        logging.info("[System] Bot restarted after update!")
+        send_message(user_id, "[System] Bot restarted after update!")
 
-# Определение функции send_file
 def send_file(chat_id, file_path):
     logging.info(f"Sending file {file_path} to {chat_id}")
     with open(file_path, 'rb') as file:
         bot.send_document(chat_id, file)
-
-def send_message(chat_id, text):
-    logging.info(f"Sending message to {chat_id}: {text}")
-    bot.send_message(chat_id, text)
 
 @bot.message_handler(func=lambda message: not is_allowed_user(message.chat.id))
 def handle_unauthorized_message(message):
@@ -89,8 +85,6 @@ def get_external_ip():
 def run_bot():
     try:
         logging.info("[System] Bot started!")
-
-        # Получаем внешний IP-адрес при запуске бота
         external_ip = get_external_ip()
         if external_ip:
             for user_id in ALLOWED_USERS:
