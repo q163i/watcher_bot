@@ -1,0 +1,5 @@
+*.DS_Store*
+*mydatabase.db*
+*mydatabase.db-journal*
+*.pytest_cache*
+*.sops.yaml*

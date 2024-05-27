@@ -1,0 +1,17 @@
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "python.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "python.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    project: {{ .Values.projectName }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "python.fullname" . }}
+  minReplicas: 1
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 80

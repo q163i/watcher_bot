@@ -1,0 +1,43 @@
+# Docker Compose version
+version: '3.8'
+
+# Define services
+services:
+  # Service for the Python Telegram bot
+  watcher_bot:
+    # Build configuration for the Docker image
+    build:
+      # Use the current directory as the build context
+      context: ./
+    # Name of the container
+    container_name: watcher_bot
+    # Docker image to use (If you want -> CHANGE ON YOURS)
+    image: romanolitvinov/watcher_bot:latest
+    # Do not automatically restart the container
+    restart: always
+    # Read-only file system
+    read_only: true
+    # Drop all capabilities
+    privileged: false
+    # User ID and group ID for the container (non-root user)
+    user: "1001:1001"  # Run as non-root user
+    # Environment variables for configuring the bot
+    env_file:
+      - .env
+    networks:
+      - bot_network
+    # Resource limits for the container
+    deploy:
+      resources:
+        # Reservation and limit for CPU and memory
+        reservations:
+          cpus: '0.1'
+          memory: '64M'
+        # Limit for CPU and memory
+        limits:
+          cpus: '0.5'
+          memory: '128M'
+
+networks:
+  bot_network:
+    driver: bridge

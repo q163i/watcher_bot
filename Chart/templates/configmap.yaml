@@ -1,0 +1,13 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "python.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "python.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    project: {{ .Values.projectName }}
+data:
+{{- range $key, $value := .Values.env }}
+  {{ $key }}: {{ $value | quote }}
+{{- end }}

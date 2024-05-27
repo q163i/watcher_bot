@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.volume.name }}
+  labels:
+    app.kubernetes.io/name: {{ include "python.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    project: {{ .Values.projectName }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.volume.size }}

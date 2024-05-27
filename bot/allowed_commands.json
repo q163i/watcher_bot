@@ -1,0 +1,5 @@
+[
+    {"name": "pwd", "command": "pwd"},
+    {"name": "ls -la", "command": "ls -la"},
+    {"name": "Check memory usage", "command": "/checkMemoryUsage"}
+]

@@ -1,0 +1,15 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "python.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "python.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    project: {{ .Values.projectName }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "python.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}

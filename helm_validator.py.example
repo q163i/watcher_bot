@@ -1,0 +1,99 @@
+import os, subprocess, logging, argparse
+
+# Logging setup
+lg = logging.getLogger('helm_validator')
+lg.setLevel(logging.INFO)
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+lg.addHandler(stream_handler)
+
+# Create the parser
+parser = argparse.ArgumentParser(description='Process template and instance folders')
+
+# Add the arguments
+parser.add_argument('--templateFolder',
+                    type=str,
+                    default='templates/Chart/',
+                    help='the path to the template folder')
+
+parser.add_argument('--instanceFolder',
+                    type=str,
+                    default='instances/',
+                    help='the path to the instance folder')
+
+# Parse the arguments
+args = parser.parse_args()
+
+# Use the arguments in your script
+TEMPLATE_FOLDER = args.templateFolder
+INSTANCES_FOLDER = args.instanceFolder
+
+# Check if template folder exists
+if not os.path.isdir(TEMPLATE_FOLDER):
+    lg.error(f"[D2D] Template folder:'{TEMPLATE_FOLDER}' set but not found. Please check the path")
+    exit(1)
+
+# Check if instance folder exists and contains subdirectories
+if not os.path.isdir(INSTANCES_FOLDER) or not any(os.path.isdir(os.path.join(INSTANCES_FOLDER, i)) for i in os.listdir(INSTANCES_FOLDER)):
+    lg.info(f"[D2D] Instance folder:'{INSTANCES_FOLDER}' set but not found or does not contain any subdirectories (default instance folder is 'instances/'). Checking only default")
+    INSTANCES_FOLDER = 'instances/'
+
+# Get a list of all files and folders in INSTANCES_FOLDER
+all_files_and_folders = os.listdir(INSTANCES_FOLDER)
+
+# Filter out the files, leaving only the folders (subdirectories)
+subdirectories = [folder for folder in all_files_and_folders if os.path.isdir(os.path.join(INSTANCES_FOLDER, folder))]
+
+# Log the count and names of the subdirectories
+lg.info(f"[D2D] Found {len(subdirectories)} subdirectories in the default instance folder:")
+for subdir in subdirectories:
+    lg.info(f"- {subdir}")
+
+# Function to run helm commands
+def run_helm(name, default_values_path, instance_values_path):
+    # Run helm template command without --debug flag
+    result = subprocess.run([
+        "helm",
+        "template",
+        name,
+        TEMPLATE_FOLDER,
+        "-f", default_values_path,
+        "-f", instance_values_path
+    ], stdout=subprocess.DEVNULL)
+    if result.returncode > 0:
+        lg.info('Helm template: ERROR')
+        lg.info(f'Error in {instance_values_path}')
+        # Run helm template command again with --debug flag
+        subprocess.run([
+            "helm",
+            "template",
+            name,
+            TEMPLATE_FOLDER,
+            "-f", default_values_path,
+            "-f", instance_values_path,
+            "--debug"
+        ])
+    else:
+        lg.info('Helm template: OK')
+
+# Function to get file paths
+def get_file_paths(where):
+    for dir_path, _, files in os.walk(where):
+        for instance_values_file in files:
+            if instance_values_file.endswith('.yaml'):
+                default_values_file = 'values.yaml'  # Default values file in the Chart directory
+                default_values_path = os.path.abspath(os.path.join(TEMPLATE_FOLDER, default_values_file))
+                instance_values_path = os.path.abspath(os.path.join(dir_path, instance_values_file))
+                yield instance_values_path, default_values_path, dir_path
+
+# Perform check for each .yaml file in the instances/ directory
+file_paths = list(get_file_paths(INSTANCES_FOLDER))
+if file_paths:
+    for result in file_paths:
+        lg.info(f'----\n[D2D] Check envs/secrets: {result[2]}/{result[0].split("/")[-1]}')
+        run_helm(result[2].split("/")[-1], result[1], result[0])
+else:
+    # If there are no files in instances/, check templates/Chart using default values
+    default_values_file = 'values.yaml'  # Default values file in the Chart directory
+    default_values_path = os.path.abspath(os.path.join(TEMPLATE_FOLDER, default_values_file))
+    run_helm('default', default_values_path, default_values_path)

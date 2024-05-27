@@ -1,0 +1,86 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "python.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "python.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    project: {{ .Values.projectName }}
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "python.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "python.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          securityContext:
+            runAsUser: 1001
+            runAsGroup: 1001
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          # Graceful shutdown of the container
+          # https://learnk8s.io/graceful-shutdown and https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution
+          lifecycle:
+            preStop:
+              exec:
+                command: [ "sleep", "15" ]
+          resources:
+            limits:
+              cpu: "{{ .Values.resources.limits.cpu }}"
+              memory: "{{ .Values.resources.limits.memory }}"
+            requests:
+              cpu: "{{ .Values.resources.requests.cpu }}"
+              memory: "{{ .Values.resources.requests.memory }}"
+          ports:
+            - name: "{{ if .Values.service.ssl.enabled }}https{{ else }}http{{ end }}"
+              containerPort: {{ int .Values.service.port }}
+              protocol: TCP
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - pgrep python || exit 1
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 5
+#          readinessProbe:
+#            httpGet:
+#              path: {{ .Values.service.probe.readness_path }}
+#              port: {{ int .Values.service.frontend_port }}
+#            initialDelaySeconds: 10
+#            periodSeconds: 5
+#          livenessProbe:
+#            httpGet:
+#              path: {{ .Values.service.probe.liveness_path }}
+#              port: {{ int .Values.service.frontend_port }}
+#            initialDelaySeconds: 15
+#            periodSeconds: 5
+          volumeMounts:
+            - name: {{ .Values.volume.name }}
+              mountPath: {{ .Values.volume.path }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "python.fullname" . }}
+            - secretRef:
+                name: {{ include "python.fullname" . }}
+      volumes:
+        - name: {{ .Values.volume.name }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.volume.name }}

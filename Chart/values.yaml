@@ -1,0 +1,56 @@
+---
+# USE DEFAULT NAMESPACE!
+
+projectName: "watcher_bot"
+
+replicaCount: 1
+
+image:
+  repository: romanolitvinov/watcher_bot
+  tag: latest
+  pullPolicy: Always
+
+resources:
+  limits:
+      cpu: "1"
+      memory: "500Mi"
+  requests:
+      cpu: "0.5"
+      memory: "200Mi"
+
+volume:
+  name: "mydatabase"
+  size: "10Mi"
+  path: "/tmp/data"
+
+service:
+  port: 80
+  frontend_port: "5000"
+  probe:
+    liveness_path: "/"
+    readness_path: "/"
+  ssl:
+    enabled: false
+    host: "example.com"
+
+env:
+  LOG_LEVEL: "INFO"
+  RESTART_NOTIFICATION: "true"
+  DB_HOST: "127.0.0.1"
+  DB_NAME: "/tmp/data/mydatabase.db"
+
+## USE secrets.yaml INSTEAD
+# Example of secrets:
+secrets:
+  TOKEN: "CHANGE_TOKEN"
+  ALLOWED_USERS: "CHANGE_ALLOWED_USERS"
+
+#  KUBERNETES_API_URL: "TYPE_KUBERNETES_API_URL"
+#  KUBERNETES_API_TOKEN: "TYPE_KUBERNETES_API_TOKEN"
+
+#  DB_USER: "CHANGE_DB_USER"
+#  DB_PASSWORD: "CHANGE_DB_PASSWORD"
+
+
+
+
