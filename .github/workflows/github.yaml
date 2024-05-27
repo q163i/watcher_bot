@@ -57,7 +57,7 @@ jobs:
 
   NotifySuccessBuild:
     needs:
-      - CheckHelmValidatorScript
+#      - CheckHelmValidatorScript
       - DockerMultiBuildAndPush
     runs-on: ubuntu-latest
 
@@ -70,7 +70,7 @@ jobs:
 
   NotifyFailureBuild:
     needs:
-      - CheckHelmValidatorScript
+#      - CheckHelmValidatorScript
       - DockerMultiBuildAndPush
     runs-on: ubuntu-latest
     if: failure()
