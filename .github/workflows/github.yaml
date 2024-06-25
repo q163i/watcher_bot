@@ -70,7 +70,7 @@ jobs:
       - name: "Success: Notify Message"
         run: 'docker run -e "GITHUB_BUILD_STATUS=$GITHUB_BUILD_STATUS" -e "TOKEN=$TOKEN" -e "ALLOWED_USERS=$ALLOWED_USERS" -e "GITHUB_REPOSITORY=$GITHUB_REPOSITORY" -e "GITHUB_REF=$GITHUB_REF" -e "GITHUB_ACTOR=$GITHUB_ACTOR" -e "GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE" romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeploySuccess'
         env:
-          GITHUB_BUILD_STATUS: "Build Success"
+          GITHUB_BUILD_STATUS: "🔝Build Success"
           TOKEN: "${{ secrets.TOKEN }}"
           ALLOWED_USERS: "${{ secrets.ALLOWED_USERS }}"
 
@@ -87,9 +87,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: "FAIL: Notify Message"
-        run: docker run -e GITHUB_BUILD_STATUS=$GITHUB_BUILD_STATUS -e TOKEN=$TOKEN -e ALLOWED_USERS=$ALLOWED_USERS -e GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e GITHUB_REF=$GITHUB_REF -e GITHUB_ACTOR=$GITHUB_ACTOR -e GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeployFail
+      - name: "Fail: Notify Message"
+        run: 'docker run -e "GITHUB_BUILD_STATUS=$GITHUB_BUILD_STATUS" -e "TOKEN=$TOKEN" -e "ALLOWED_USERS=$ALLOWED_USERS" -e "GITHUB_REPOSITORY=$GITHUB_REPOSITORY" -e "GITHUB_REF=$GITHUB_REF" -e "GITHUB_ACTOR=$GITHUB_ACTOR" -e "GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE" romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeployFail'
         env:
-          GITHUB_BUILD_STATUS: "Build Fail"
-          TOKEN: ${{ secrets.TOKEN }}
-          ALLOWED_USERS: ${{ secrets.ALLOWED_USERS }}
+          GITHUB_BUILD_STATUS: "⚠️Build Fail"
+          TOKEN: "${{ secrets.TOKEN }}"
+          ALLOWED_USERS: "${{ secrets.ALLOWED_USERS }}"
