@@ -60,10 +60,15 @@ jobs:
 #      - CheckHelmValidatorScript
       - DockerMultiBuildAndPush
     runs-on: ubuntu-latest
+    env:
+      GITHUB_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
 
     steps:
-      - name: watcher_bot send message (success build)
-        run: "docker run -e TOKEN=$TOKEN -e ALLOWED_USERS=$ALLOWED_USERS romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeploySuccess --text 'GitHub: d2d. Build and push success'"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: "SUCCESS: Notify Message"
+        run: docker run -e $GITHUB_BUILD_STATUS=Build Success -e TOKEN=$TOKEN -e ALLOWED_USERS=$ALLOWED_USERS -e $GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e GITHUB_REF=$GITHUB_REF -e GITHUB_ACTOR=$GITHUB_ACTOR -e $GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeploySuccess
         env:
           TOKEN: ${{ secrets.TOKEN }}
           ALLOWED_USERS: ${{ secrets.ALLOWED_USERS }}
@@ -74,10 +79,15 @@ jobs:
       - DockerMultiBuildAndPush
     runs-on: ubuntu-latest
     if: failure()
+    env:
+      GITHUB_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
 
     steps:
-      - name: watcher_bot send message (fail build)
-        run: "docker run -e TOKEN=$TOKEN -e ALLOWED_USERS=$ALLOWED_USERS romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeployFail --text 'GitHub: d2d. Build and push failed'"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: "FAIL: Notify Message"
+        run: docker run -e $GITHUB_BUILD_STATUS=Build Fail -e TOKEN=$TOKEN -e ALLOWED_USERS=$ALLOWED_USERS -e $GITHUB_REPOSITORY=$GITHUB_REPOSITORY -e GITHUB_REF=$GITHUB_REF -e GITHUB_ACTOR=$GITHUB_ACTOR -e $GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeployFail
         env:
           TOKEN: ${{ secrets.TOKEN }}
           ALLOWED_USERS: ${{ secrets.ALLOWED_USERS }}
