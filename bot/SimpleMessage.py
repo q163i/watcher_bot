@@ -31,9 +31,9 @@ def replace_env_variables(text):
 def infoDeploySuccess():
     try:
         admin_chat = ALLOWED_USERS
-        text = args.text if args.text else f"Stage: $STAGE\nProject: $PROJECT\nVersion: $VERSION\nINFO: $STATUS_INFO"
+        text = args.text if args.text else f"```🟢CI/CD\nProject: $GITHUB_REPOSITORY\nVersion: $GITHUB_REF\nCommit: $GITHUB_COMMIT_MESSAGE\nAuthor: $GITHUB_ACTOR\nSTATUS: $GITHUB_BUILD_STATUS\n```"
         text = replace_env_variables(text)
-        bot.send_message(admin_chat, text)
+        bot.send_message(admin_chat, text, parse_mode='Markdown')
     except Exception as e:
         logger.error(f"Error: {e}")
         logger.error("Usage: python3 ./bot/SimpleMessage.py infoDeploySuccess --text \"<text>\"")
@@ -41,9 +41,9 @@ def infoDeploySuccess():
 def infoDeployFail():
     try:
         admin_chat = ALLOWED_USERS
-        text = args.text if args.text else f"Stage: $STAGE\nProject: $PROJECT\nVersion: $VERSION\nINFO: $STATUS_INFO"
+        text = args.text if args.text else f"```🔴CI/CD\nProject: $GITHUB_REPOSITORY\nVersion: $GITHUB_REF\nCommit: $GITHUB_COMMIT_MESSAGE\nAuthor: $GITHUB_ACTOR\nSTATUS: $GITHUB_BUILD_STATUS\n```"
         text = replace_env_variables(text)
-        bot.send_message(admin_chat, text)
+        bot.send_message(admin_chat, text, parse_mode='Markdown')
     except Exception as e:
         logger.error(f"Error: {e}")
         logger.error("Usage: python3 ./bot/SimpleMessage.py infoDeployFail --text \"<text>\"")
