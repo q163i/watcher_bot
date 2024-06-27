@@ -41,7 +41,7 @@ def infoDeploySuccess():
 def infoDeployFail():
     try:
         admin_chat = ALLOWED_USERS
-        text = args.text if args.text else f"```🔴CI/CD\nProject: $GITHUB_REPOSITORY\nVersion: $GITHUB_REF\nCommit: $GITHUB_COMMIT_MESSAGE\nAuthor: $GITHUB_ACTOR\nSTATUS: $GITHUB_BUILD_STATUS\n```"
+        text = args.text if args.text else f"```🔴CI/CD\nProject: $GITHUB_REPOSITORY\nVersion: $GITHUB_REF\nCommit: $GITHUB_COMMIT_MESSAGE\nAuthor: $GITHUB_ACTOR\nSTATUS: $GITHUB_BUILD_STATUS\nDetails: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID```"
         text = replace_env_variables(text)
         bot.send_message(admin_chat, text, parse_mode='Markdown')
     except Exception as e:
