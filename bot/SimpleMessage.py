@@ -41,9 +41,12 @@ def infoDeploySuccess():
 def infoDeployFail():
     try:
         admin_chat = ALLOWED_USERS
-        text = args.text if args.text else f"```🔴CI/CD\nProject: $GITHUB_REPOSITORY\nVersion: $GITHUB_REF\nCommit: $GITHUB_COMMIT_MESSAGE\nAuthor: $GITHUB_ACTOR\nSTATUS: $GITHUB_BUILD_STATUS\nDetails: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID```"
+        text = args.text if args.text else f"```🔴CI/CD\nProject: $GITHUB_REPOSITORY\nVersion: $GITHUB_REF\nCommit: $GITHUB_COMMIT_MESSAGE\nAuthor: $GITHUB_ACTOR\nSTATUS: $GITHUB_BUILD_STATUS\n```"
+        link = f"Details: https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
         text = replace_env_variables(text)
+        link = replace_env_variables(link)
         bot.send_message(admin_chat, text, parse_mode='Markdown')
+        bot.send_message(admin_chat, link)
     except Exception as e:
         logger.error(f"Error: {e}")
         logger.error("Usage: python3 ./bot/SimpleMessage.py infoDeployFail --text \"<text>\"")
