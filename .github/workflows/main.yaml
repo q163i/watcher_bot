@@ -1,12 +1,12 @@
 ---
-name: GitHub Actions for watcher_bot project
+name: main
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  DockerMultiBuildAndPush:
+  DockerBuildPushCheck:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -36,9 +36,58 @@ jobs:
           romanolitvinov/watcher_bot:latest
         platforms: ${{ matrix.platform }}
 
+    - name: 'aquasecurity/trivy-code'
+      uses: aquasecurity/trivy-action@0.23.0
+      with:
+        hide-progress: true
+        output: 'watcher_bot_trivy_codescan.txt'
+        severity: 'HIGH,CRITICAL'
+        format: 'table'
+        scan-type: 'fs'
+
+    - name: 'aquasecurity/trivy-image'
+      uses: aquasecurity/trivy-action@0.23.0
+      with:
+        hide-progress: true
+        output: 'watcher_bot_trivy_imagescan.txt'
+        severity: 'HIGH,CRITICAL'
+        format: 'table'
+        image-ref: romanolitvinov/watcher_bot:latest
+      env:
+        TRIVY_USERNAME: romanolitvinov
+        TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: 'aquasecurity/trivy-code output'
+      run: |
+        if [[ -s watcher_bot_trivy_codescan.txt ]]; then
+          {
+            echo "### [Artefacts] Trivy:codescan"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```terraform'
+            cat watcher_bot_trivy_codescan.txt
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: 'aquasecurity/trivy-image output'
+      run: |
+        if [[ -s watcher_bot_trivy_imagescan.txt ]]; then
+          {
+            echo "### [Artefacts] Trivy:imagescan"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```terraform'
+            cat watcher_bot_trivy_imagescan.txt
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+        fi
+
 #  CheckHelmValidatorScript:
 #    needs:
-#      - DockerMultiBuildAndPush
+#      - DockerBuildPushCheck
 #    runs-on: ubuntu-latest
 #
 #    steps:
@@ -58,7 +107,7 @@ jobs:
   NotifySuccessBuild:
     needs:
 #      - CheckHelmValidatorScript
-      - DockerMultiBuildAndPush
+      - DockerBuildPushCheck
     runs-on: ubuntu-latest
     env:
       GITHUB_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
@@ -70,14 +119,14 @@ jobs:
       - name: "Success: Notify Message"
         run: 'docker run -e "GITHUB_BUILD_STATUS=$GITHUB_BUILD_STATUS" -e "TOKEN=$TOKEN" -e "ALLOWED_USERS=$ALLOWED_USERS" -e "GITHUB_REPOSITORY=$GITHUB_REPOSITORY" -e "GITHUB_REF=$GITHUB_REF" -e "GITHUB_ACTOR=$GITHUB_ACTOR" -e "GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE" -e "GITHUB_RUN_ID=$GITHUB_RUN_ID" romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeploySuccess'
         env:
-          GITHUB_BUILD_STATUS: "🔝Build Success"
+          GITHUB_BUILD_STATUS: "🍏Build Success"
           TOKEN: "${{ secrets.TOKEN }}"
           ALLOWED_USERS: "${{ secrets.ALLOWED_USERS }}"
 
   NotifyFailureBuild:
     needs:
 #      - CheckHelmValidatorScript
-      - DockerMultiBuildAndPush
+      - DockerBuildPushCheck
     runs-on: ubuntu-latest
     if: failure()
     env:
