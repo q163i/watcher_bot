@@ -36,32 +36,30 @@ jobs:
           romanolitvinov/watcher_bot:latest
         platforms: ${{ matrix.platform }}
 
-    - name: 'aquasecurity/trivy-code'
+    - name: 'Trivy:codescan'
       uses: aquasecurity/trivy-action@0.23.0
       with:
+        scan-type: 'fs'
         hide-progress: true
         output: 'watcher_bot_trivy_codescan.txt'
         severity: 'HIGH,CRITICAL'
         format: 'table'
-        scan-type: 'fs'
 
-    - name: 'aquasecurity/trivy-image'
+    - name: 'Trivy:imagescan'
       uses: aquasecurity/trivy-action@0.23.0
       with:
-        hide-progress: true
-        output: 'watcher_bot_trivy_imagescan.txt'
-        severity: 'HIGH,CRITICAL'
-        format: 'table'
         image-ref: romanolitvinov/watcher_bot:latest
+        format: 'table'
+        output: 'watcher_bot_trivy_imagescan.txt'
       env:
         TRIVY_USERNAME: romanolitvinov
         TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: 'aquasecurity/trivy-code output'
+    - name: 'Trivy:codescan output'
       run: |
         if [[ -s watcher_bot_trivy_codescan.txt ]]; then
           {
-            echo "### [Artefacts] Trivy:codescan"
+            echo "### [Artefacts] 📊 Trivy:codescan"
             echo "<details><summary>Click to expand</summary>"
             echo ""
             echo '```terraform'
@@ -71,11 +69,11 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
         fi
 
-    - name: 'aquasecurity/trivy-image output'
+    - name: 'Trivy:imagescan output'
       run: |
         if [[ -s watcher_bot_trivy_imagescan.txt ]]; then
           {
-            echo "### [Artefacts] Trivy:imagescan"
+            echo "### [Artefacts] 🐳 Trivy:imagescan"
             echo "<details><summary>Click to expand</summary>"
             echo ""
             echo '```terraform'
@@ -84,6 +82,7 @@ jobs:
             echo "</details>"
           } >> $GITHUB_STEP_SUMMARY
         fi
+
 
 #  CheckHelmValidatorScript:
 #    needs:
@@ -113,9 +112,6 @@ jobs:
       GITHUB_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: "Success: Notify Message"
         run: 'docker run -e "GITHUB_BUILD_STATUS=$GITHUB_BUILD_STATUS" -e "TOKEN=$TOKEN" -e "ALLOWED_USERS=$ALLOWED_USERS" -e "GITHUB_REPOSITORY=$GITHUB_REPOSITORY" -e "GITHUB_REF=$GITHUB_REF" -e "GITHUB_ACTOR=$GITHUB_ACTOR" -e "GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE" -e "GITHUB_RUN_ID=$GITHUB_RUN_ID" romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeploySuccess'
         env:
@@ -133,9 +129,6 @@ jobs:
       GITHUB_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: "Fail: Notify Message"
         run: 'docker run -e "GITHUB_BUILD_STATUS=$GITHUB_BUILD_STATUS" -e "TOKEN=$TOKEN" -e "ALLOWED_USERS=$ALLOWED_USERS" -e "GITHUB_REPOSITORY=$GITHUB_REPOSITORY" -e "GITHUB_REF=$GITHUB_REF" -e "GITHUB_ACTOR=$GITHUB_ACTOR" -e "GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE" -e "GITHUB_RUN_ID=$GITHUB_RUN_ID" romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeployFail'
         env:
