@@ -5,18 +5,12 @@ TOKEN = os.getenv("TOKEN")  # Telegram bot token
 ALLOWED_USERS = []
 for user_id in os.getenv("ALLOWED_USERS", "").split(","):
     if user_id:
-        ALLOWED_USERS.append(int(user_id))
+        try:
+            ALLOWED_USERS.append(int(user_id))
+        except ValueError:
+            raise ValueError(f"Invalid user ID: {user_id}")
 
-## Kubernetes settings
-# Create user and secret for Kubernetes:
-# kubectl create serviceaccount my-service-account -n default
-# kubectl create role my-role --verb="*" --resource="*" -n default
-# kubectl create rolebinding my-rolebinding --role=my-role --serviceaccount=default:my-service-account -n default
-# openssl genrsa -out my-service-account.key 2048
-# openssl req -new -key my-service-account.key -out my-service-account.csr -subj "/CN=my-service-account/O=group1"
-# openssl x509 -req -in my-service-account.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out my-service-account.crt -days 365
-# kubectl create secret generic my-service-account-secret --from-literal=token=sadlkfjejp2oj34023 -n default
-# kubectl patch serviceaccount my-service-account -p '{"imagePullSecrets": [{"name": "my-service-account-secret"}]}' -n default
+# Kubernetes settings
 DEFAULT_KUBERNETES_API_URL = 'localhost'  # Default Kubernetes API URL
 DEFAULT_KUBERNETES_API_TOKEN = 'blabla123'  # Default Kubernetes API token
 KUBERNETES_API_URL = os.getenv("KUBERNETES_API_URL", DEFAULT_KUBERNETES_API_URL)  # Kubernetes API URL

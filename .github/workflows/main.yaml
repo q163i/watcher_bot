@@ -5,6 +5,11 @@ on:
   push:
     branches: [ "main" ]
 
+env:
+  TOKEN: "${{ secrets.TOKEN }}"
+  ALLOWED_USERS: "${{ secrets.ALLOWED_USERS }}"
+  GITHUB_COMMIT_MESSAGE: "${{ github.event.head_commit.message }}"
+
 jobs:
   DockerBuildPushCheck:
     runs-on: ubuntu-latest
@@ -83,7 +88,6 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
         fi
 
-
 #  CheckHelmValidatorScript:
 #    needs:
 #      - DockerBuildPushCheck
@@ -104,34 +108,22 @@ jobs:
 #        docker run -v $(pwd)/instances:/instances romanolitvinov/d2d_helm_validator:latest
 
   NotifySuccessBuild:
-    needs:
-#      - CheckHelmValidatorScript
-      - DockerBuildPushCheck
+    needs: DockerBuildPushCheck
     runs-on: ubuntu-latest
-    env:
-      GITHUB_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
 
     steps:
       - name: "Success: Notify Message"
         run: 'docker run -e "GITHUB_BUILD_STATUS=$GITHUB_BUILD_STATUS" -e "TOKEN=$TOKEN" -e "ALLOWED_USERS=$ALLOWED_USERS" -e "GITHUB_REPOSITORY=$GITHUB_REPOSITORY" -e "GITHUB_REF=$GITHUB_REF" -e "GITHUB_ACTOR=$GITHUB_ACTOR" -e "GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE" -e "GITHUB_RUN_ID=$GITHUB_RUN_ID" romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeploySuccess'
         env:
           GITHUB_BUILD_STATUS: "🍏Build Success"
-          TOKEN: "${{ secrets.TOKEN }}"
-          ALLOWED_USERS: "${{ secrets.ALLOWED_USERS }}"
 
   NotifyFailureBuild:
-    needs:
-#      - CheckHelmValidatorScript
-      - DockerBuildPushCheck
+    needs: DockerBuildPushCheck
     runs-on: ubuntu-latest
     if: failure()
-    env:
-      GITHUB_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
 
     steps:
       - name: "Fail: Notify Message"
         run: 'docker run -e "GITHUB_BUILD_STATUS=$GITHUB_BUILD_STATUS" -e "TOKEN=$TOKEN" -e "ALLOWED_USERS=$ALLOWED_USERS" -e "GITHUB_REPOSITORY=$GITHUB_REPOSITORY" -e "GITHUB_REF=$GITHUB_REF" -e "GITHUB_ACTOR=$GITHUB_ACTOR" -e "GITHUB_COMMIT_MESSAGE=$GITHUB_COMMIT_MESSAGE" -e "GITHUB_RUN_ID=$GITHUB_RUN_ID" romanolitvinov/watcher_bot:latest python3 /app/bot/SimpleMessage.py infoDeployFail'
         env:
           GITHUB_BUILD_STATUS: "⚠️Build Fail"
-          TOKEN: "${{ secrets.TOKEN }}"
-          ALLOWED_USERS: "${{ secrets.ALLOWED_USERS }}"
