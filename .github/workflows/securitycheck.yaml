@@ -1,0 +1,106 @@
+---
+name: SecurityCheck
+
+on:
+  push:
+    branches:
+      - 'securitycheck'
+  schedule:
+    - cron: '0 0 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  SecurityCheck:
+    runs-on: dev
+    steps:
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+# CodeScan
+    - name: 'Trivy:codescan'
+      uses: aquasecurity/trivy-action@0.23.0
+      with:
+        scan-type: 'fs'
+        hide-progress: true
+        output: 'trivy_codescan.txt'
+        severity: 'HIGH,CRITICAL'
+        format: 'table'
+
+    - name: 'Trivy:codescan output'
+      run: |
+        if [[ -s trivy_codescan.txt ]]; then
+          {
+            echo "### [Artefacts] 📊 Trivy:codescan"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```terraform'
+            cat trivy_codescan.txt
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+        fi
+
+# Gitleaks scan
+    - name: 'Gitleaks:scan'
+      continue-on-error: true
+      run: |
+        docker run -v "$(pwd)":/path zricethezav/gitleaks:latest detect --source="/path" -v -f csv -r /path/gitleaks_scan_temp.txt
+
+    - name: 'Gitleaks:rewrite output'
+      run: |
+        cat ./gitleaks_scan_temp.txt | column -t -s "," > ./gitleaks_scan.txt 
+
+    - name: 'Gitleaks:scan output'
+      run: |
+        if [[ -s gitleaks_scan.txt  ]]; then
+          {
+            echo "### [Artefacts] 🔒 Gitleaks:scan"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```terraform'
+            cat gitleaks_scan.txt 
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+        fi
+
+# ImageScan
+    - name: 'Trivy:imagescan'
+      uses: aquasecurity/trivy-action@0.23.0
+      with:
+        image-ref: romanolitvinov/watcher_bot:latest
+        format: 'table'
+        output: 'trivy_imagescan.txt'
+      env:
+        TRIVY_USERNAME: romanolitvinov
+        TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: 'Check and trim Trivy:imagescan output'
+      run: |
+        MAX_SIZE=819200
+        FILE_SIZE=$(stat -c%s "trivy_imagescan.txt")
+        if [ $FILE_SIZE -gt $MAX_SIZE ]; then
+          echo "File size is $FILE_SIZE bytes, trimming to $MAX_SIZE bytes."
+          tail -c $MAX_SIZE "trivy_imagescan.txt" > "trivy_imagescan_trimmed.txt"
+          mv "trivy_imagescan_trimmed.txt" "trivy_imagescan.txt"
+        fi
+
+    - name: 'Trivy:imagescan output'
+      run: |
+        if [[ -s trivy_imagescan.txt ]]; then
+          {
+            echo "### [Artefacts] 🐳 Trivy:imagescan"
+            echo "<details><summary>Click to expand</summary>"
+            echo ""
+            echo '```terraform'
+            cat trivy_imagescan.txt
+            echo '```'
+            echo "</details>"
+          } >> $GITHUB_STEP_SUMMARY
+        fi

@@ -237,9 +237,9 @@ user@computername watcher_bot % helm upgrade \
   --cleanup-on-fail \
   --install watcher-bot ./Chart \
   -f Chart/values.yaml \
+  -f Chart/secrets.yaml \
   --namespace default \
-  --wait --timeout 300
-#    -f Chart/secrets.yaml \
+  --wait --timeout 300s
 #  --set image.tag=latest \
 
 NAME: watcher-bot

@@ -41,53 +41,6 @@ jobs:
           romanolitvinov/watcher_bot:latest
         platforms: ${{ matrix.platform }}
 
-    - name: 'Trivy:codescan'
-      uses: aquasecurity/trivy-action@0.23.0
-      with:
-        scan-type: 'fs'
-        hide-progress: true
-        output: 'watcher_bot_trivy_codescan.txt'
-        severity: 'HIGH,CRITICAL'
-        format: 'table'
-
-    - name: 'Trivy:imagescan'
-      uses: aquasecurity/trivy-action@0.23.0
-      with:
-        image-ref: romanolitvinov/watcher_bot:latest
-        format: 'table'
-        output: 'watcher_bot_trivy_imagescan.txt'
-      env:
-        TRIVY_USERNAME: romanolitvinov
-        TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
-
-    - name: 'Trivy:codescan output'
-      run: |
-        if [[ -s watcher_bot_trivy_codescan.txt ]]; then
-          {
-            echo "### [Artefacts] 📊 Trivy:codescan"
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '```terraform'
-            cat watcher_bot_trivy_codescan.txt
-            echo '```'
-            echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
-        fi
-
-    - name: 'Trivy:imagescan output'
-      run: |
-        if [[ -s watcher_bot_trivy_imagescan.txt ]]; then
-          {
-            echo "### [Artefacts] 🐳 Trivy:imagescan"
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '```terraform'
-            cat watcher_bot_trivy_imagescan.txt
-            echo '```'
-            echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
-        fi
-
 #  CheckHelmValidatorScript:
 #    needs:
 #      - DockerBuildPushCheck
