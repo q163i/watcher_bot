@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   SecurityCheck:
-    runs-on: dev
+    runs-on: ubuntu-latest
     steps:
 
     - name: Checkout code
