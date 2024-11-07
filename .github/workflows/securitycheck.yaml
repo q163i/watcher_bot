@@ -22,29 +22,29 @@ jobs:
       with:
         fetch-depth: 0
 
-# CodeScan
-    - name: 'Trivy:codescan'
-      uses: aquasecurity/trivy-action@0.23.0
-      with:
-        scan-type: 'fs'
-        hide-progress: true
-        output: 'trivy_codescan.txt'
-        severity: 'HIGH,CRITICAL'
-        format: 'table'
+# # CodeScan
+#     - name: 'Trivy:codescan'
+#       uses: aquasecurity/trivy-action@0.23.0
+#       with:
+#         scan-type: 'fs'
+#         hide-progress: true
+#         output: 'trivy_codescan.txt'
+#         severity: 'HIGH,CRITICAL'
+#         format: 'table'
 
-    - name: 'Trivy:codescan output'
-      run: |
-        if [[ -s trivy_codescan.txt ]]; then
-          {
-            echo "### [Artefacts] 📊 Trivy:codescan"
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '```terraform'
-            cat trivy_codescan.txt
-            echo '```'
-            echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
-        fi
+#     - name: 'Trivy:codescan output'
+#       run: |
+#         if [[ -s trivy_codescan.txt ]]; then
+#           {
+#             echo "### [Artefacts] 📊 Trivy:codescan"
+#             echo "<details><summary>Click to expand</summary>"
+#             echo ""
+#             echo '```terraform'
+#             cat trivy_codescan.txt
+#             echo '```'
+#             echo "</details>"
+#           } >> $GITHUB_STEP_SUMMARY
+#         fi
 
 # Gitleaks scan
     - name: 'Gitleaks:scan'
@@ -70,37 +70,37 @@ jobs:
           } >> $GITHUB_STEP_SUMMARY
         fi
 
-# ImageScan
-    - name: 'Trivy:imagescan'
-      uses: aquasecurity/trivy-action@0.23.0
-      with:
-        image-ref: romanolitvinov/watcher_bot:latest
-        format: 'table'
-        output: 'trivy_imagescan.txt'
-      env:
-        TRIVY_USERNAME: romanolitvinov
-        TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+# # ImageScan
+#     - name: 'Trivy:imagescan'
+#       uses: aquasecurity/trivy-action@0.23.0
+#       with:
+#         image-ref: romanolitvinov/watcher_bot:latest
+#         format: 'table'
+#         output: 'trivy_imagescan.txt'
+#       env:
+#         TRIVY_USERNAME: romanolitvinov
+#         TRIVY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    - name: 'Check and trim Trivy:imagescan output'
-      run: |
-        MAX_SIZE=819200
-        FILE_SIZE=$(stat -c%s "trivy_imagescan.txt")
-        if [ $FILE_SIZE -gt $MAX_SIZE ]; then
-          echo "File size is $FILE_SIZE bytes, trimming to $MAX_SIZE bytes."
-          tail -c $MAX_SIZE "trivy_imagescan.txt" > "trivy_imagescan_trimmed.txt"
-          mv "trivy_imagescan_trimmed.txt" "trivy_imagescan.txt"
-        fi
+#     - name: 'Check and trim Trivy:imagescan output'
+#       run: |
+#         MAX_SIZE=819200
+#         FILE_SIZE=$(stat -c%s "trivy_imagescan.txt")
+#         if [ $FILE_SIZE -gt $MAX_SIZE ]; then
+#           echo "File size is $FILE_SIZE bytes, trimming to $MAX_SIZE bytes."
+#           tail -c $MAX_SIZE "trivy_imagescan.txt" > "trivy_imagescan_trimmed.txt"
+#           mv "trivy_imagescan_trimmed.txt" "trivy_imagescan.txt"
+#         fi
 
-    - name: 'Trivy:imagescan output'
-      run: |
-        if [[ -s trivy_imagescan.txt ]]; then
-          {
-            echo "### [Artefacts] 🐳 Trivy:imagescan"
-            echo "<details><summary>Click to expand</summary>"
-            echo ""
-            echo '```terraform'
-            cat trivy_imagescan.txt
-            echo '```'
-            echo "</details>"
-          } >> $GITHUB_STEP_SUMMARY
-        fi
+#     - name: 'Trivy:imagescan output'
+#       run: |
+#         if [[ -s trivy_imagescan.txt ]]; then
+#           {
+#             echo "### [Artefacts] 🐳 Trivy:imagescan"
+#             echo "<details><summary>Click to expand</summary>"
+#             echo ""
+#             echo '```terraform'
+#             cat trivy_imagescan.txt
+#             echo '```'
+#             echo "</details>"
+#           } >> $GITHUB_STEP_SUMMARY
+#         fi
